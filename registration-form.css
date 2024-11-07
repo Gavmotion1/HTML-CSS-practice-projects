@@ -10,4 +10,9 @@ body {
     display: block;
     margin: 0.5rem 0;
   }
-  
+.terms-link {
+  color: burlywood;
+  }
+  h1, p, .contact-data, .account-type {
+    text-align: center;
+  }
