@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background-color: #fff;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="waveCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('waveCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas to full window size
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // Particle class for the tiny black dots
+    class Particle {
+      constructor(x, y, size, waveHeight, waveSpeed, waveFrequency) {
+        this.x = x;
+        this.baseY = y;
+        this.y = y;
+        this.size = size;
+        this.waveHeight = waveHeight;
+        this.waveSpeed = waveSpeed;
+        this.waveFrequency = waveFrequency;
+        this.offset = Math.random() * 1000; // Random starting position in the wave
+      }
+      
+      update(time) {
+        // Move particle from right to left
+        this.x -= this.waveSpeed;
+        
+        // If particle moves off left edge, wrap around to right
+        if (this.x < -10) {
+          this.x = canvas.width + 10;
+        }
+        
+        // Calculate vertical position using sine wave for natural wave motion
+        this.y = this.baseY + Math.sin((this.x * this.waveFrequency) + time) * this.waveHeight;
+      }
+      
+      draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+      }
+    }
+    
+    // Create particles
+    const particles = [];
+    const particleDensity = 0.5; // Higher value = more particles
+    
+    function createParticles() {
+      particles.length = 0;
+      
+      // Create multiple wave lines covering the entire screen
+      const totalLines = Math.floor(canvas.height / 3); // One line every 3 pixels (very dense)
+      
+      for (let line = 0; line < totalLines; line++) {
+        // Calculate base Y position for this wave line
+        const baseY = line * 3;
+        
+        // Wave properties vary slightly by vertical position
+        // Waves at the bottom are larger, slower, and have longer wavelengths
+        const waveHeight = 2 + (line / totalLines) * 12;
+        const waveSpeed = 0.3 + (line / totalLines) * 0.7;
+        const waveFrequency = 0.005 - (line / totalLines) * 0.002;
+        
+        // Place particles along this wave line
+        const particlesPerLine = Math.floor(canvas.width / 2) * particleDensity;
+        for (let i = 0; i < particlesPerLine; i++) {
+          const x = Math.random() * (canvas.width + 200);
+          
+          // Random opacity based on position (denser at certain heights)
+          const density = 0.1 + 0.8 * Math.pow(Math.sin((line / totalLines) * Math.PI), 2);
+          
+          if (Math.random() < density) {
+            particles.push(new Particle(
+              x, 
+              baseY, 
+              line % 5 === 0 ? 1.5 : 1, // Slightly larger particles on every 5th line
+              waveHeight,
+              waveSpeed,
+              waveFrequency
+            ));
+          }
+        }
+      }
+      
+      console.log(`Created ${particles.length} particles`);
+    }
+    
+    // Animation loop
+    let time = 0;
+    function animate() {
+      // Clear with slight opacity to create fading trail effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Update and draw particles
+      for (const particle of particles) {
+        particle.update(time);
+        particle.draw();
+      }
+      
+      time += 0.01; // Very slow time progression for gentle wave motion
+      requestAnimationFrame(animate);
+    }
+    
+    // Initialize
+    window.addEventListener('load', () => {
+      createParticles();
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        createParticles();
+      });
+      animate();
+    });
+  </script>
+</body>
+</html>
